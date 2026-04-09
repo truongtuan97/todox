@@ -2,20 +2,34 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import api from "@/lib/axios";
+import { registerFormSchema } from "@/schemas/register.schema";
 
 const RegisterPage = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const validationResult = registerFormSchema.safeParse({
+            email,
+            password,
+            confirmPassword,
+        });
 
-        if (!email || !password) {
-            toast.error("Please enter email and password");
+        if (!validationResult.success) {
+            const fieldErrors = validationResult.error.flatten().fieldErrors;
+            setErrors({
+                email: fieldErrors.email?.[0] || "",
+                password: fieldErrors.password?.[0] || "",
+                confirmPassword: fieldErrors.confirmPassword?.[0] || "",
+            });
             return;
         }
+        setErrors({});
 
         try {
             setIsSubmitting(true);
@@ -41,10 +55,16 @@ const RegisterPage = () => {
                         <input
                             type="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                setErrors((prev) => ({ ...prev, email: "" }));
+                            }}
                             placeholder="you@example.com"
                             className="w-full px-3 py-2 border rounded-lg outline-none border-slate-300 focus:ring-2 focus:ring-primary"
                         />
+                        {errors.email && (
+                            <p className="text-sm text-red-500">{errors.email}</p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -52,10 +72,39 @@ const RegisterPage = () => {
                         <input
                             type="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                setErrors((prev) => ({
+                                    ...prev,
+                                    password: "",
+                                    confirmPassword: "",
+                                }));
+                            }}
                             placeholder="Create a password"
                             className="w-full px-3 py-2 border rounded-lg outline-none border-slate-300 focus:ring-2 focus:ring-primary"
                         />
+                        {errors.password && (
+                            <p className="text-sm text-red-500">{errors.password}</p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-slate-700">
+                            Confirm Password
+                        </label>
+                        <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => {
+                                setConfirmPassword(e.target.value);
+                                setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                            }}
+                            placeholder="Re-enter your password"
+                            className="w-full px-3 py-2 border rounded-lg outline-none border-slate-300 focus:ring-2 focus:ring-primary"
+                        />
+                        {errors.confirmPassword && (
+                            <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+                        )}
                     </div>
 
                     <button

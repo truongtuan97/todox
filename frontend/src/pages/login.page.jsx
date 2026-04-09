@@ -2,20 +2,32 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import api from "@/lib/axios";
+import { loginFormSchema } from "@/schemas/login.schema";
 
 const LoginPage = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!email || !password) {
-            toast.error("Please enter email and password");
+        const validateResult = loginFormSchema.safeParse({
+            email,
+            password
+        });
+
+        if (!validateResult.success) {
+            const fieldErrors = validateResult.error.flatten().fieldErrors;
+            setErrors({
+                email: fieldErrors.email?.[0] || "",
+                password: fieldErrors.password?.[0] || ""
+            });
             return;
         }
+        setErrors({});
 
         try {
             setIsSubmitting(true);
@@ -53,6 +65,9 @@ const LoginPage = () => {
                             placeholder="you@example.com"
                             className="w-full px-3 py-2 border rounded-lg outline-none border-slate-300 focus:ring-2 focus:ring-primary"
                         />
+                        {errors.email && (
+                            <p className="text-sm text-red-500">{errors.email}</p>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -64,6 +79,9 @@ const LoginPage = () => {
                             placeholder="Your password"
                             className="w-full px-3 py-2 border rounded-lg outline-none border-slate-300 focus:ring-2 focus:ring-primary"
                         />
+                        {errors.password && (
+                            <p className="text-sm text-red-500">{errors.password}</p>
+                        )}
                     </div>
 
                     <button
