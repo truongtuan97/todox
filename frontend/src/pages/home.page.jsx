@@ -9,8 +9,10 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
 import { visibleTaskLimit } from "@/lib/data";
+import { useNavigate } from "react-router";
 
 const HomePage = () => {
+    const navigate = useNavigate();
     const [taskBuffer, setTaskBuffer] = useState([]);
     const [activeTaskCount, setActiveTaskCount] = useState(0);
     const [completeTaskCount, setCompleteTaskCount] = useState(0);
@@ -32,7 +34,7 @@ const HomePage = () => {
             const data = await res.data;
             setTaskBuffer(data.tasks);
             setActiveTaskCount(data.activeCount);
-            setCompleteTaskCount(data.completeCount);            
+            setCompleteTaskCount(data.completeCount);
         } catch (error) {
             console.error("Loi xay ra khi truy xuat tasks, ", error);
             toast.error("Loi xay ra khi truy xuat tasks")
@@ -76,6 +78,12 @@ const HomePage = () => {
     const handlePageChange = (newPage) => {
         setPage(newPage);
     }
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        toast.success("Logged out successfully");
+        navigate("/login", { replace: true });
+    };
     
 
     if (visibleTasks.length === 0) {
@@ -100,7 +108,18 @@ const HomePage = () => {
             {/* Your Content/Components */}
 
             <div className="container pt-8 mx-auto relative zindex-10">
+                <div className="flex justify-end px-6">
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="px-4 py-2 text-sm font-medium text-white transition rounded-lg bg-slate-800 hover:bg-slate-900"
+                    >
+                        Logout
+                    </button>
+                </div>
+
                 <div className="w-full max-w-2xl p-6 mx-auto space-y-6">
+
                     <Header />
 
                     <AddTask handleNewTaskAdded={handleTaskChange} />

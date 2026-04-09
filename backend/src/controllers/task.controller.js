@@ -1,7 +1,14 @@
 import Task from "../models/Task.js"
+import mongoose from "mongoose";
 
 export const getAllTasks = async (req, res) => {
-    const { filter = "today" } = req.body;
+    const { filter = "today" } = req.query;
+    const userId = req.user?.user_id;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid user id in token" });
+    }
+
     const now = new Date();
     let startDate;
 
@@ -24,7 +31,11 @@ export const getAllTasks = async (req, res) => {
         }
     };
 
-    const query = startDate ? { createdAt: { $gte: startDate } } : {};
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const query = startDate
+        ? { userId: userObjectId, createdAt: { $gte: startDate } }
+        : { userId: userObjectId };
+        
     try {
         const result = await Task.aggregate([
             { $match: query },
@@ -50,8 +61,11 @@ export const getAllTasks = async (req, res) => {
 
 export const createTask = async (req, res) => {
     try {
+        const userId = req.user?.user_id;
+        if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
         const { title } = req.body;
-        const task = new Task({ title });
+        const task = new Task({ title, userId });
         const newTask = await task.save();
         res.status(201).json(newTask);
     } catch (error) {
@@ -62,9 +76,12 @@ export const createTask = async (req, res) => {
 
 export const updateTask = async (req, res) => {
     try {
+        const userId = req.user?.user_id;
+        if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
         const { title, status, completedAt } = req.body;
-        const updatedTask = await Task.findByIdAndUpdate(
-            req.params.id,
+        const updatedTask = await Task.findOneAndUpdate(
+            { _id: req.params.id, userId },
             {
                 title,
                 status,
@@ -85,7 +102,10 @@ export const updateTask = async (req, res) => {
 
 export const deleteTask = async (req, res) => {
     try {
-        const deletedTask = await Task.findByIdAndDelete(req.params.id);
+        const userId = req.user?.user_id;
+        if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+        const deletedTask = await Task.findOneAndDelete({ _id: req.params.id, userId });
         if (!deletedTask) return res.status(404).json({ message: "Task not found" });
 
         res.status(200).json(deletedTask);

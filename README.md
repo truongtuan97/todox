@@ -81,3 +81,44 @@ Delete a task.
 
 - Backend: `npm run dev` (nodemon)
 - Frontend: `npm run dev` (Vite)
+
+## Frontend tests (full flow)
+
+This repo includes a frontend integration-style test that runs the full UI flow:
+**Register → Login → Create Task → Verify task is displayed**.
+
+### Setup
+
+```bash
+cd frontend
+npm install
+```
+
+### Run tests
+
+```bash
+cd frontend
+npm test
+```
+
+### What is tested
+
+- **Register**: fill email/password and submit (calls `POST /auth/register`)
+- **Login**: submit credentials (calls `POST /auth/login`), stores token in `localStorage`, navigates to `/`
+- **Create Task**: add a task title (calls `POST /tasks`)
+- **Get Task + UI**: refreshes task list (calls `GET /tasks?filter=today`) and asserts the task title appears in the UI
+
+### How it’s implemented
+
+1) **Test file**
+- `frontend/src/tests/FullFlow.test.jsx`
+
+2) **Render the real app + routing**
+- The test uses `window.history.pushState(..., "/register")` then `render(<App />)` so `BrowserRouter` starts at `/register`.
+
+3) **Mock the API layer (no backend required)**
+- `@/lib/axios` is mocked to provide `get/post/put/delete` stubs.
+- `POST /auth/register`, `POST /auth/login`, and `POST /tasks` return successful responses.
+- `GET /tasks?filter=today` is mocked twice:
+  - first call returns an empty list (initial HomePage load)
+  - second call returns a list containing the created task (after clicking “Them”)
