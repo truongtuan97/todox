@@ -20,10 +20,18 @@ const LoginPage = () => {
         });
 
         if (!validateResult.success) {
-            const fieldErrors = validateResult.error.flatten().fieldErrors;
+            const fieldErrors = validateResult.error.issues.reduce((acc, issue) => {
+                const fieldName = issue.path?.[0];
+
+                if (typeof fieldName === "string" && !acc[fieldName]) {
+                    acc[fieldName] = issue.message;
+                }
+
+                return acc;
+            }, {});
             setErrors({
-                email: fieldErrors.email?.[0] || "",
-                password: fieldErrors.password?.[0] || ""
+                email: fieldErrors.email || "",
+                password: fieldErrors.password || ""
             });
             return;
         }

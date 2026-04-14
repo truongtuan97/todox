@@ -20,12 +20,19 @@ const RegisterPage = () => {
             confirmPassword,
         });
 
-        if (!validationResult.success) {
-            const fieldErrors = validationResult.error.flatten().fieldErrors;
+        if (!validationResult.success) {            
+            const fieldErrors = validationResult.error.issues.reduce((acc, issue) => {
+                const fieldName = issue.path?.[0];
+
+                if (typeof fieldName === "string" && !acc[fieldName]) {
+                    acc[fieldName] = issue.message;
+                }
+                return acc;
+            }, []);
             setErrors({
-                email: fieldErrors.email?.[0] || "",
-                password: fieldErrors.password?.[0] || "",
-                confirmPassword: fieldErrors.confirmPassword?.[0] || "",
+                email: fieldErrors.email || "",
+                password: fieldErrors.password || "",
+                confirmPassword: fieldErrors.confirmPassword || "",
             });
             return;
         }
